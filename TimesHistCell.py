@@ -43,7 +43,7 @@ class CookingData:
 
         # Read data
         data_path = join_path(self.root_dir, "dst_export.txt")
-        data = np.loadtxt(data_path, delimiter=',')  # , max_rows=1000)  # , usecols=range(186))
+        data = np.loadtxt(data_path, delimiter=',')  # , max_rows=10000)  # , usecols=range(186))
 
         time_1 = tm.time()
         print(f"Time reading data: {time_1 - time_0:.3f} seconds")
@@ -69,9 +69,16 @@ class CookingData:
 
     def different_multiplicities(self, data):
         """
-        Method which sets arrays by planes with anomalous multiplicities.
+        Method which sets arrays by planes with "anomalous" multiplicities sotored on a list of three arrays.
+        These arrays have the form by columns:
+        [
+            N, M,  # Time and charge multiplicities respectively
+            kx1 (T1), ky1 (T1), ..., kxN (TN), kyN (TN), T1, ..., TN,  # Time coordinates and values
+            kx1 (Q1), ky1 (Q1), ..., kxN (QN), kyN (QN), Q1, ..., QN,  # Charge coordinates and values
+            0, ..., 0  # The array is filled with zeros to a size of 32 columns
+        ]
         :param data: Array with data taken from file.txt
-        :return: Void function, but sets self.time_clusters and self.char_clusters
+        :return: Void function, but sets self.diff_matrix
         """
         max_multi = 5  # Maximum multiplicity
         max_columns = 2 + 6*max_multi  # Maximum of columns we'll need
@@ -93,7 +100,7 @@ class CookingData:
                 if len(times_id_list[p]) > 5 or len(chars_id_list[p]) > 5:
                     continue
                 if len(times_id_list[p]) != len(chars_id_list[p]):
-                    print(f"* Plane {p+1}: time mult. {len(times_id_list[p])}, charge mult. {len(chars_id_list[p])}")
+                    # print(f"* Plane {p+1}: time mult. {len(times_id_list[p])}, charge mult. {len(chars_id_list[p])}")
 
                     ary_times = [self.coord_ix[k + 1] for k in times_id_list[p]]
                     ary_chars = [self.coord_ix[k + 1] for k in chars_id_list[p]]
@@ -113,7 +120,7 @@ class CookingData:
                                              coord_times, times_list[p][times_id_list[p]],
                                              coord_chars, chars_list[p][chars_id_list[p]]))
                     new_row = np.hstack((new_row, [0]*(max_columns - new_row.shape[0])))
-                    print(f"New ROW Length: {new_row.shape[0]}")
+                    # print(f"New ROW Length: {new_row.shape[0]}")
                     data_planes[p] = np.vstack((data_planes[p], new_row))
         self.diff_matrix = data_planes
 
@@ -313,3 +320,7 @@ if __name__ == "__main__":
     # # k_clusters = list: [Plane][Multiplicity] -> [array]
     # t_clusters = CD.time_clusters
     # c_clusters = CD.char_clusters
+
+    mT1 = CD.diff_matrix[0]
+    mT2 = CD.diff_matrix[1]
+    mT3 = CD.diff_matrix[2]
